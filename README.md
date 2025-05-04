@@ -2,6 +2,9 @@
 
 This project is a demo application designed to verify the performance difference between using SharedArrayBuffer and the standard method (postMessage) when communicating with Web Workers.
 
+[Demo](https://nextjs-webworker-sharedarraybuffer.vercel.app/)
+[Blog](https://all-dev-kang.tistory.com/entry/Web-Worker%EC%97%90%EC%84%9C-SharedArrayBuffer%EB%8A%94-%EC%A0%95%EB%A7%90-%EC%84%B1%EB%8A%A5%EC%9D%84-%EA%B0%9C%EC%84%A0%ED%95%A0%EA%B9%8C)
+
 ## Overview
 
 Web Workers enable multithreaded processing in browsers, but communication between the main thread and Workers typically involves data copying. SharedArrayBuffer can reduce this copying cost by sharing memory between threads.
@@ -10,6 +13,9 @@ This project compares two approaches:
 
 1. **Standard Web Worker**: Uses `postMessage` to send audio data to the Worker, resulting in data copying when transferring results
 2. **SharedArrayBuffer Worker**: Main thread and Worker share the same memory area, allowing direct access without data transfer
+
+![다운로드](https://github.com/user-attachments/assets/ceed63bd-86e1-44d9-a3c2-a40c62b57e99)
+<img width="640" alt="다운로드 (1)" src="https://github.com/user-attachments/assets/13039bbd-5568-42d8-822b-875125410438" />
 
 ## Key Features
 
