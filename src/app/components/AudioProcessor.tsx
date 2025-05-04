@@ -5,7 +5,7 @@ import { generateSampleAudio } from "../utils/audioUtils";
 import taskQueue from "../utils/taskQueue"; // Import both default instance and class
 import ResultChart from "./ResultChart";
 
-// 각 실행 결과를 저장할 타입 정의
+// Define type to store each run result
 type RunResult = {
   runNumber: number;
   standardTime: number;
@@ -16,10 +16,10 @@ type RunResult = {
   sharedTransfer: number | null;
 };
 
-// 벤치마크 설정 및 결과를 포함하는 히스토리 항목 타입
+// Define type for benchmark history item including settings and results
 type BenchmarkHistoryItem = {
   id: string;
-  audioDuration: number; // 초 단위
+  audioDuration: number; // in seconds
   iterations: number;
   avgStandardTime: number;
   avgStandardProcessing: number;
@@ -31,7 +31,7 @@ type BenchmarkHistoryItem = {
 };
 
 export default function AudioProcessor() {
-  // 각 실행 결과를 저장할 배열
+  // Arrays to store each run result
   const [standardRunResults, setStandardRunResults] = useState<RunResult[]>([]);
   const [sharedRunResults, setSharedRunResults] = useState<RunResult[]>([]);
 
@@ -81,9 +81,9 @@ export default function AudioProcessor() {
     useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState("Ready");
-  const [audioDuration, setAudioDuration] = useState<number>(60); // 기본값 1분 (60초)
+  const [audioDuration, setAudioDuration] = useState<number>(60); // Default 1 minute (60 seconds)
   const [currentRun, setCurrentRun] = useState<number>(0);
-  const [totalRuns, setTotalRuns] = useState<number>(5); // 기본값 5회
+  const [totalRuns, setTotalRuns] = useState<number>(5); // Default 5 runs
 
   // Arrays to store results from multiple runs
   const standardWorkerTimesRef = useRef<number[]>([]);
@@ -103,12 +103,12 @@ export default function AudioProcessor() {
   // Constants for audio generation
   const SAMPLE_RATE = 44100;
 
-  // 워커 지원 여부를 확인하는 상태 추가
+  // State to check if SharedArrayBuffer is supported
   const [sharedArrayBufferSupported, setSharedArrayBufferSupported] = useState<
     boolean | null
   >(null);
 
-  // 벤치마크 히스토리 저장을 위한 상태 유지
+  // State to maintain benchmark history
   const [benchmarkHistory, setBenchmarkHistory] = useState<
     BenchmarkHistoryItem[]
   >([]);
@@ -125,7 +125,7 @@ export default function AudioProcessor() {
     };
   }, []);
 
-  // SharedArrayBuffer 지원 여부 확인
+  // Check if SharedArrayBuffer is supported
   useEffect(() => {
     const checkSharedArrayBufferSupport = () => {
       try {
@@ -182,7 +182,7 @@ export default function AudioProcessor() {
         calculateAverage(sharedProcessingTimesRef.current)
       );
     } else {
-      // 결과가 없으면 null로 설정
+      // Set to null if no results
       setAvgSharedBufferWorkerTime(null);
       setAvgSharedTransferTime(null);
       setAvgSharedProcessingTime(null);
@@ -201,7 +201,7 @@ export default function AudioProcessor() {
   // Process next step based on current state
   const processNext = (currentWorkerType: "standard" | "shared") => {
     if (currentWorkerType === "standard") {
-      // 현재 표준 워커 결과 저장
+      // Store current standard worker results
       if (
         standardWorkerTime !== null &&
         standardProcessingTime !== null &&
@@ -220,23 +220,23 @@ export default function AudioProcessor() {
         setStandardRunResults((prev) => [...prev, newResult]);
       }
 
-      // 다음 반복으로 진행
+      // Proceed to next iteration
       const nextRun = currentRun + 1;
 
       if (nextRun < totalRuns) {
-        // 다음 표준 워커 실행
+        // Execute next standard worker
         setCurrentRun(nextRun);
         setTimeout(() => {
           console.log("Processing with standard worker");
           processWithStandardWorker();
         }, 100);
       } else {
-        // 표준 워커 모두 완료, 이제 공유 버퍼 워커로 전환
+        // All standard workers completed, switch to shared buffer worker
         setCurrentRun(0);
 
-        // SharedArrayBuffer 지원 여부 확인
+        // Check if SharedArrayBuffer is supported
         if (!sharedArrayBufferSupported) {
-          // 지원하지 않으면 완료 처리
+          // Finish if not supported
           finishAllRuns();
         } else {
           setTimeout(() => {
@@ -245,11 +245,11 @@ export default function AudioProcessor() {
         }
       }
     } else if (currentWorkerType === "shared") {
-      // 현재 공유 버퍼 워커 결과 저장
+      // Store current shared buffer worker results
       if (sharedBufferWorkerTime !== null) {
         const newResult: RunResult = {
           runNumber: currentRun + 1,
-          standardTime: 0, // 실제 값은 사용하지 않음
+          standardTime: 0, // Actual value not used
           standardProcessing: 0,
           standardTransfer: 0,
           sharedTime: sharedBufferWorkerTime,
@@ -260,17 +260,17 @@ export default function AudioProcessor() {
         setSharedRunResults((prev) => [...prev, newResult]);
       }
 
-      // 다음 반복으로 진행
+      // Proceed to next iteration
       const nextRun = currentRun + 1;
 
       if (nextRun < totalRuns) {
-        // 다음 공유 버퍼 워커 실행
+        // Execute next shared buffer worker
         setCurrentRun(nextRun);
         setTimeout(() => {
           processWithSharedBuffer();
         }, 500);
       } else {
-        // 모든 실행 완료
+        // All runs completed
         finishAllRuns();
       }
     }
@@ -278,10 +278,10 @@ export default function AudioProcessor() {
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const minutes = parseInt(e.target.value, 10);
-    setAudioDuration(minutes * 60); // 분을 초로 변환
+    setAudioDuration(minutes * 60); // Convert minutes to seconds
   };
 
-  // 반복 횟수 변경 핸들러 추가
+  // Add handler for changing number of runs
   const handleRunsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const runs = parseInt(e.target.value, 10);
     setTotalRuns(runs);
@@ -412,7 +412,7 @@ export default function AudioProcessor() {
     try {
       console.log("Starting SharedArrayBuffer worker process");
 
-      // SharedArrayBuffer 지원 확인 - 중복 체크
+      // Check if SharedArrayBuffer is supported - redundant check
       if (
         typeof SharedArrayBuffer === "undefined" ||
         !sharedArrayBufferSupported
@@ -422,7 +422,7 @@ export default function AudioProcessor() {
           "Error: SharedArrayBuffer not supported in this browser. Make sure your browser supports it and COOP/COEP headers are properly set."
         );
 
-        // 모든 실행 완료로 처리
+        // Treat as all runs completed
         finishAllRuns();
         return;
       }
@@ -472,7 +472,7 @@ export default function AudioProcessor() {
         );
         sharedStartTimeRef.current = performance.now();
 
-        // 워커 타임아웃 처리
+        // Handle worker timeout
         const workerTimeout = setTimeout(() => {
           console.error("Shared buffer worker timeout - no response received");
           if (sharedWorkerRef.current) {
@@ -488,13 +488,13 @@ export default function AudioProcessor() {
           setSharedTransferTime(null);
           setSharedVerificationResult("Timeout - no response");
 
-          // 다음 실행으로 진행
+          // Proceed to next run
           processNext("shared");
-        }, 10000); // 10초 타임아웃
+        }, 10000); // 10-second timeout
 
         // Handle messages from the worker
         worker.onmessage = (event) => {
-          clearTimeout(workerTimeout); // 타임아웃 취소
+          clearTimeout(workerTimeout); // Cancel timeout
 
           console.log(
             "Received message from shared buffer worker:",
@@ -535,7 +535,7 @@ export default function AudioProcessor() {
             // Process next step
             processNext("shared");
           } else if (type === "ERROR") {
-            clearTimeout(workerTimeout); // 타임아웃 취소
+            clearTimeout(workerTimeout); // Cancel timeout
             console.error(
               "Error from shared buffer worker:",
               event.data.message
@@ -550,7 +550,7 @@ export default function AudioProcessor() {
 
         // Add error handler
         worker.onerror = (error) => {
-          clearTimeout(workerTimeout); // 타임아웃 취소
+          clearTimeout(workerTimeout); // Cancel timeout
 
           console.error("Shared buffer worker error:", error);
           setStatus(`Worker error: ${error.message}`);
@@ -594,7 +594,7 @@ export default function AudioProcessor() {
     }
   };
 
-  // 표준 워커 처리를 위한 Promise 기반 함수
+  // Promise-based function for processing with standard worker
   const processStandardWorkerAsync = (runIndex: number): Promise<RunResult> => {
     return new Promise((resolve, reject) => {
       try {
@@ -606,16 +606,16 @@ export default function AudioProcessor() {
           } minutes)...`
         );
 
-        // 상태 초기화
+        // Reset state
         setStandardWorkerTime(null);
         setStandardTransferTime(null);
         setStandardProcessingTime(null);
         setStandardVerificationResult("");
 
-        // 오디오 데이터 생성
+        // Generate audio data
         const audioData = generateSampleAudio(audioDuration, SAMPLE_RATE);
 
-        // 워커 생성
+        // Create worker
         const worker = new Worker(
           new URL("../workers/standardWorker.ts", import.meta.url)
         );
@@ -626,14 +626,14 @@ export default function AudioProcessor() {
         );
         const startTime = performance.now();
 
-        // 워커 메시지 핸들러
+        // Worker message handler
         worker.onmessage = (event) => {
           const { type, processedData, processingTime } = event.data;
 
           if (type === "PROCESSING_COMPLETE") {
             const totalTime = performance.now() - startTime;
 
-            // 결과 저장
+            // Store results
             const result: RunResult = {
               runNumber: runIndex + 1,
               standardTime: totalTime,
@@ -644,17 +644,17 @@ export default function AudioProcessor() {
               sharedTransfer: null,
             };
 
-            // 현재 실행 결과 상태 업데이트
+            // Update current run result state
             setStandardWorkerTime(totalTime);
             setStandardProcessingTime(processingTime);
             setStandardTransferTime(totalTime - processingTime);
 
-            // 평균 계산용 배열 업데이트
+            // Update arrays for averaging
             standardWorkerTimesRef.current.push(totalTime);
             standardProcessingTimesRef.current.push(processingTime);
             standardTransferTimesRef.current.push(totalTime - processingTime);
 
-            // 결과 배열에 추가
+            // Add to results array
             setStandardRunResults((prev) => [...prev, result]);
 
             setStatus(
@@ -663,14 +663,14 @@ export default function AudioProcessor() {
               }/${totalRuns}: Processing complete`
             );
 
-            // 데이터 검증
+            // Verify data
             const verificationResult = verifyData(processedData);
             setStandardVerificationResult(verificationResult);
 
             worker.terminate();
             standardWorkerRef.current = null;
 
-            // 프로미스 해결
+            // Resolve promise
             resolve(result);
           } else if (type === "ERROR") {
             setStatus(`Error: ${event.data.message}`);
@@ -680,7 +680,7 @@ export default function AudioProcessor() {
           }
         };
 
-        // 오류 핸들러
+        // Error handler
         worker.onerror = (error) => {
           setStatus(`Worker error: ${error.message}`);
           worker.terminate();
@@ -688,7 +688,7 @@ export default function AudioProcessor() {
           reject(error);
         };
 
-        // 오디오 데이터 전송
+        // Send audio data
         worker.postMessage(
           {
             type: "PROCESS_AUDIO",
@@ -702,13 +702,13 @@ export default function AudioProcessor() {
     });
   };
 
-  // SharedArrayBuffer 워커 처리를 위한 Promise 기반 함수
+  // Promise-based function for processing with SharedArrayBuffer worker
   const processSharedBufferWorkerAsync = (
     runIndex: number
   ): Promise<RunResult> => {
     return new Promise((resolve, reject) => {
       try {
-        // SharedArrayBuffer 지원 확인
+        // Check if SharedArrayBuffer is supported
         if (
           typeof SharedArrayBuffer === "undefined" ||
           !sharedArrayBufferSupported
@@ -723,7 +723,7 @@ export default function AudioProcessor() {
             sharedTransfer: null,
           };
 
-          // 지원하지 않으면 null 결과 반환
+          // Return null result if not supported
           resolve(noSupportResult);
           return;
         }
@@ -736,20 +736,20 @@ export default function AudioProcessor() {
           } minutes)...`
         );
 
-        // 상태 초기화
+        // Reset state
         setSharedBufferWorkerTime(null);
         setSharedTransferTime(null);
         setSharedProcessingTime(null);
         setSharedVerificationResult("");
 
-        // 오디오 데이터 생성
+        // Generate audio data
         const audioData = generateSampleAudio(audioDuration, SAMPLE_RATE);
 
         const sharedOutputBuffer = new SharedArrayBuffer(audioData.byteLength);
-        // Float32Array 뷰 생성
+        // Create Float32Array view
         const sharedOutputArray = new Float32Array(sharedOutputBuffer);
 
-        // 워커 생성
+        // Create worker
         const worker = new Worker(
           new URL("../workers/sharedBufferWorker.ts", import.meta.url)
         );
@@ -762,7 +762,7 @@ export default function AudioProcessor() {
         );
         const startTime = performance.now();
 
-        // 타임아웃 설정
+        // Set timeout
         const timeoutId = setTimeout(() => {
           if (sharedWorkerRef.current) {
             sharedWorkerRef.current.terminate();
@@ -771,7 +771,7 @@ export default function AudioProcessor() {
           reject(new Error("SharedArrayBuffer worker timeout"));
         }, 10000);
 
-        // 워커 메시지 핸들러
+        // Worker message handler
         worker.onmessage = (event) => {
           clearTimeout(timeoutId);
           const { type, processingTime } = event.data;
@@ -779,7 +779,7 @@ export default function AudioProcessor() {
           if (type === "PROCESSING_COMPLETE") {
             const totalTime = performance.now() - startTime;
 
-            // 결과 저장
+            // Store results
             const result: RunResult = {
               runNumber: runIndex + 1,
               standardTime: 0,
@@ -790,17 +790,17 @@ export default function AudioProcessor() {
               sharedTransfer: totalTime - processingTime,
             };
 
-            // 현재 실행 결과 상태 업데이트
+            // Update current run result state
             setSharedBufferWorkerTime(totalTime);
             setSharedProcessingTime(processingTime);
             setSharedTransferTime(totalTime - processingTime);
 
-            // 평균 계산용 배열 업데이트
+            // Update arrays for averaging
             sharedBufferWorkerTimesRef.current.push(totalTime);
             sharedProcessingTimesRef.current.push(processingTime);
             sharedTransferTimesRef.current.push(totalTime - processingTime);
 
-            // 결과 배열에 추가
+            // Add to results array
             setSharedRunResults((prev) => [...prev, result]);
 
             setStatus(
@@ -809,14 +809,14 @@ export default function AudioProcessor() {
               }/${totalRuns}: Processing complete`
             );
 
-            // 데이터 검증
+            // Verify data
             const verificationResult = verifyData(sharedOutputArray);
             setSharedVerificationResult(verificationResult);
 
             worker.terminate();
             sharedWorkerRef.current = null;
 
-            // 프로미스 해결
+            // Resolve promise
             resolve(result);
           } else if (type === "ERROR") {
             clearTimeout(timeoutId);
@@ -827,7 +827,7 @@ export default function AudioProcessor() {
           }
         };
 
-        // 오류 핸들러
+        // Error handler
         worker.onerror = (error) => {
           clearTimeout(timeoutId);
           setStatus(`Worker error: ${error.message}`);
@@ -836,7 +836,7 @@ export default function AudioProcessor() {
           reject(error);
         };
 
-        // 버퍼 정보 전송
+        // Send buffer information
         worker.postMessage({
           type: "PROCESS_SHARED_AUDIO",
           outputBuffer: sharedOutputBuffer,
@@ -848,15 +848,15 @@ export default function AudioProcessor() {
     });
   };
 
-  // TaskQueue를 사용한 벤치마크 실행 함수
+  // Function to start benchmark using TaskQueue
   const startBenchmark = async () => {
     try {
-      // 초기화
+      // Initialize
       setIsProcessing(true);
       setStandardRunResults([]);
       setSharedRunResults([]);
 
-      // 평균값 배열 초기화
+      // Initialize arrays for averages
       standardWorkerTimesRef.current = [];
       standardProcessingTimesRef.current = [];
       standardTransferTimesRef.current = [];
@@ -864,22 +864,22 @@ export default function AudioProcessor() {
       sharedProcessingTimesRef.current = [];
       sharedTransferTimesRef.current = [];
 
-      // TaskQueue 인스턴스 사용 (싱글톤)
+      // Use TaskQueue instance (singleton)
       const queue = taskQueue;
 
-      // 각 큐에 실행 태스크 추가
+      // Add tasks to each queue
       for (let i = 0; i < totalRuns; i++) {
         queue.enqueue(() => processStandardWorkerAsync(i));
         queue.enqueue(() => processSharedBufferWorkerAsync(i));
       }
 
-      // 큐의 태스크 실행
+      // Execute tasks in queue
       setStatus("Running benchmarks...");
       for await (const result of queue.processQueue()) {
         console.log("Run completed:", result);
       }
 
-      // 모든 실행 완료 후 평균 계산
+      // Calculate averages after all runs complete
       calculateAveragesAndComparisons();
       setIsProcessing(false);
       setStatus("All benchmarks complete!");
@@ -903,14 +903,14 @@ export default function AudioProcessor() {
     return (standard / shared).toFixed(2) + "x";
   };
 
-  // 평균값 계산 및 비교 결과 생성 함수에 히스토리 업데이트 추가
+  // Function to calculate averages and update history with comparison results
   const calculateAveragesAndComparisons = () => {
     console.log("Calculating averages:", {
       standardTimes: standardWorkerTimesRef.current,
       sharedTimes: sharedBufferWorkerTimesRef.current,
     });
 
-    // 표준 워커 평균 계산
+    // Calculate standard worker averages
     let stdTime = 0;
     let stdProcessing = 0;
     let stdTransfer = 0;
@@ -931,7 +931,7 @@ export default function AudioProcessor() {
       });
     }
 
-    // 공유 버퍼 워커 평균 계산
+    // Calculate shared buffer worker averages
     let sharedTime = null;
     let sharedProcessing = null;
     let sharedTransfer = null;
@@ -952,7 +952,7 @@ export default function AudioProcessor() {
       });
     }
 
-    // 결과가 있다면 자동으로 히스토리에 추가
+    // Automatically add to history if results exist
     if (standardWorkerTimesRef.current.length > 0) {
       const newHistoryItem: BenchmarkHistoryItem = {
         id: Date.now().toString(),
@@ -967,12 +967,12 @@ export default function AudioProcessor() {
         timestamp: new Date(),
       };
 
-      // 히스토리에 추가
+      // Add to history
       setBenchmarkHistory((prev) => [...prev, newHistoryItem]);
       console.log("Result automatically added to history");
     }
 
-    setStatus("벤치마크 완료. 평균값 계산 완료.");
+    setStatus("Benchmark complete. Averages calculated.");
   };
 
   return (
@@ -1006,7 +1006,7 @@ export default function AudioProcessor() {
             audio data
           </p>
 
-          {/* 반복 횟수 설정 UI 추가 */}
+          {/* Add UI for setting number of iterations */}
           <label className="mb-2 mt-6 font-medium">
             Benchmark Iterations:{" "}
             <span className="font-bold">{totalRuns} runs</span>
@@ -1025,8 +1025,8 @@ export default function AudioProcessor() {
             <span className="text-sm">100</span>
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            더 많은 반복 횟수는 더 정확한 평균값을 제공하지만, 벤치마크 시간이
-            길어집니다.
+            More iterations provide more accurate averages but increase
+            benchmark time.
           </p>
 
           {sharedArrayBufferSupported !== null && (
@@ -1081,7 +1081,7 @@ export default function AudioProcessor() {
         {avgStandardWorkerTime !== null && (
           <>
             <h2 className="text-xl font-semibold mb-4 mt-8">
-              벤치마크 결과 차트
+              Benchmark Result Chart
             </h2>
             <ResultChart
               standardResults={standardRunResults}
@@ -1227,31 +1227,31 @@ export default function AudioProcessor() {
           </>
         )}
 
-        {/* 히스토리 관리 UI - 히스토리 테이블 및 초기화 버튼 유지 */}
+        {/* History management UI - keep history table and reset button */}
         {benchmarkHistory.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-4">벤치마크 히스토리</h2>
+            <h2 className="text-xl font-semibold mb-4">Benchmark History</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      날짜/시간
+                      Date/Time
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      오디오 지속 시간
+                      Audio Duration
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      반복 횟수
+                      Iterations
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      표준 Worker
+                      Standard Worker
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                       SharedArrayBuffer
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      성능 향상
+                      Performance Improvement
                     </th>
                     <th className="px-4 py-2"></th>
                   </tr>
@@ -1263,10 +1263,10 @@ export default function AudioProcessor() {
                         {item.timestamp.toLocaleString()}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm">
-                        {item.audioDuration / 60}분
+                        {item.audioDuration / 60} min
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm">
-                        {item.iterations}회
+                        {item.iterations} times
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm">
                         {item.avgStandardTime.toFixed(2)}ms
@@ -1292,7 +1292,7 @@ export default function AudioProcessor() {
                           }}
                           className="text-red-600 hover:text-red-900"
                         >
-                          삭제
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -1304,7 +1304,7 @@ export default function AudioProcessor() {
               onClick={() => setBenchmarkHistory([])}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg"
             >
-              히스토리 초기화
+              Reset History
             </button>
           </div>
         )}
